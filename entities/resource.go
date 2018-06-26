@@ -1,6 +1,8 @@
 package entities
 
-import "time"
+import (
+	"time"
+)
 
 // Resource is a entity which holds information about the active resources
 type Resource struct {

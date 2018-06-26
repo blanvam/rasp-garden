@@ -7,10 +7,17 @@ type resourceKind string
 type resourceStatus string
 
 const (
-	resourceKindIn       = resourceKind("in")
-	resourceKindOut      = resourceKind("out")
-	resourceStatusOpen   = resourceStatus("open")
-	resourceStatusClosed = resourceStatus("closed")
+	// ResourceKindIn refer to input pin
+	ResourceKindIn = resourceKind("in")
+
+	// ResourceKindOut refer to output pin
+	ResourceKindOut = resourceKind("out")
+
+	// ResourceStatusOpen refer to open pin status
+	ResourceStatusOpen = resourceStatus("open")
+
+	// ResourceStatusClosed refer to closed pin status
+	ResourceStatusClosed = resourceStatus("closed")
 )
 
 // ResourceList is a list of Resource instances

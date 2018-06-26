@@ -6,5 +6,5 @@ import "io"
 type Database interface {
 	Read(c chan []byte, id int)
 	Write(c chan bool, id int, r io.Reader)
-	Delete(c chan bool, id int)
+	Delete(c chan error, id int)
 }

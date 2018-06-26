@@ -4,24 +4,24 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/blanvam/rasp-garden/resource"
 	"github.com/peterbourgon/diskv"
 )
 
-func getdb() *diskv.Diskv {
-	flatTransform := func(s string) []string { return []string{} }
-	db := diskv.New(diskv.Options{
-		BasePath:     "my-data-dir",
-		Transform:    flatTransform,
-		CacheSizeMax: 1024 * 1024,
-	})
+type diskvDatabase struct {
+	connection *diskv.Diskv
+}
 
-	return db
+// NewDiskvDatabase aaa
+func NewDiskvDatabase(Conn *diskv.Diskv) resource.Database {
+	return &diskvDatabase{
+		connection: Conn,
+	}
 }
 
 // Read function to read from diskv database
-func Read(c chan []byte, id int) {
-	bd := getdb()
-	result, err := bd.Read(strconv.Itoa(id))
+func (d *diskvDatabase) Read(c chan []byte, id int) {
+	result, err := d.connection.Read(strconv.Itoa(id))
 	if err == nil {
 		c <- result
 	}
@@ -29,15 +29,13 @@ func Read(c chan []byte, id int) {
 }
 
 // Write function to write data with key into diskv database
-func Write(c chan bool, id int, r io.Reader) {
-	bd := getdb()
-	err := bd.WriteStream(strconv.Itoa(id), r, false)
-	c <- err != nil
+func (d *diskvDatabase) Write(c chan bool, id int, r io.Reader) {
+	err := d.connection.WriteStream(strconv.Itoa(id), r, false)
+	c <- err == nil
 }
 
 // Delete the id on diskv database
-func Delete(c chan bool, id int) {
-	bd := getdb()
-	err := bd.Erase(strconv.Itoa(id))
-	c <- err != nil
+func (d *diskvDatabase) Delete(c chan error, id int) {
+	err := d.connection.Erase(strconv.Itoa(id))
+	c <- err
 }
