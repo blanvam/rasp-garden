@@ -9,6 +9,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.0] - 2018-06-26
 ### Added
 - Resource administration endpoints.
-. Diskv used as database.
-. JWT Authentication.
+- Diskv used as database.
+- JWT Authentication.
 - API REST Base.
