@@ -15,4 +15,7 @@ var (
 
 	// ErrStore describre a store error
 	ErrStore = errors.New("Your Item could not be stored")
+
+	// ErrInvalid describre a restriction error
+	ErrInvalid = errors.New("Your Item is invalid, review restrictions")
 )
