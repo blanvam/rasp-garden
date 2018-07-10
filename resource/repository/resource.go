@@ -20,7 +20,6 @@ type resourceRepository struct {
 
 // NewResourceRepository aaa
 func NewResourceRepository(bd resource.Database, min int, max int) resource.Repository {
-
 	return &resourceRepository{
 		database: bd,
 		minPin:   min,

@@ -18,4 +18,10 @@ var (
 
 	// ErrInvalid describre a restriction error
 	ErrInvalid = errors.New("Your Item is invalid, review restrictions")
+
+	// ErrCancelled describre a client error
+	ErrCancelled = errors.New("Operation was cancelled or timed out")
+
+	// ErrNotConnected describre a client connection error
+	ErrNotConnected = errors.New("Client not connected")
 )
