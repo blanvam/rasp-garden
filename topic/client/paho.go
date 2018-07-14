@@ -12,22 +12,31 @@ import (
 
 type pahoClient struct {
 	options     *paho.ClientOptions
-	client      paho.Client
-	username 	string
-	password	string
-	servers		...string
-	clientID    string
-	storePath   string
 	timeout     time.Duration
-	certificate MQTTCredentialsProvider
+	clientID    string
+	username    string
+	password    string
+	servers     []string
+	storePath   string
+	client      paho.Client
+	certificate CredentialsProvider
 }
 
-func NewPahoClient(cid string) topic.Client {
+func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) topic.Client {
 
 	return &pahoClient{
 		options:  paho.NewClientOptions(),
+		timeout:  t,
 		clientID: cid,
+		username: u,
+		password: p,
+		servers:  s,
 	}
+}
+
+// IsConnected return true if the client is connected
+func (p *pahoClient) IsConnected(c chan bool) {
+	c <- p.client.IsConnected()
 }
 
 // Connect try to connect to the given MQTT server
@@ -46,8 +55,8 @@ func (p *pahoClient) Connect(c chan error) {
 	//})
 
 	p.options.SetClientID(p.clientID)
-	p.options.SetUsername(username)
-	p.options.SetPassword(password)
+	p.options.SetUsername(p.username)
+	p.options.SetPassword(p.password)
 
 	p.options.SetCleanSession(false)
 	p.options.SetAutoReconnect(true)
@@ -58,38 +67,47 @@ func (p *pahoClient) Connect(c chan error) {
 	p.options.SetConnectionLostHandler(func(client paho.Client, e error) { log.Printf("Connection Lost. Error: %v", e) })
 	p.options.SetOnConnectHandler(func(client paho.Client) { log.Println("Handler connected") })
 
-	for _, server := range servers {
+	for _, server := range p.servers {
 		p.options.AddBroker(server)
 	}
 
 	p.client = paho.NewClient(p.options)
 
 	token := p.client.Connect()
+	c <- p.waitForToken(token)
+}
 
+func (p *pahoClient) Disconnect(c chan error, quiesce uint) {
+	p.client.Disconnect(quiesce)
+	p.client = nil
+	c <- nil
+}
+
+func (p *pahoClient) Publish(c chan error, topic string, qos uint8, payload interface{}) {
+	token := p.client.Publish(topic, qos, true, payload)
+	c <- p.waitForToken(token)
+}
+
+func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback topic.CallbackHandler) {
+	handler := func(i paho.Client, message paho.Message) {
+		callback(topic, p.clientID, message.Payload())
+	}
+	token := p.client.Subscribe(topic, qos, handler)
+	c <- p.waitForToken(token)
+}
+
+func (p *pahoClient) Unsubscribe(c chan error, topic string) {
+	token := p.client.Unsubscribe(topic)
+	c <- p.waitForToken(token)
+}
+
+func (p *pahoClient) waitForToken(token paho.Token) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c <- p.waitForToken(ctx, token)
-}
-
-func (p *pahoClient) Publish(ctx context.Context, topic string, qos uint8, payload interface{}) error {
-	token := p.client.Publish(topic, qos, true, payload)
-	return p.waitForToken(ctx, token)
-}
-
-func (p *pahoClient) Subscribe(c chan []byte, ctx context.Context, topic string, qos uint8) error {
-	token := p.client.Subscribe(topic, qos, handler)
-	return p.waitForToken(ctx, token)
-}
-
-func (p *pahoClient) Unsubscribe(ctx context.Context, topic string) error {
-	token := p.client.Unsubscribe(topic)
-	return p.waitForToken(ctx, token)
-}
-
-func (p *pahoClient) waitForToken(ctx context.Context, token paho.Token) error {
 	result := make(chan error)
 	cancelled := false
+
 	go func() {
 		defer func() { result <- token.Error() }()
 		for {
