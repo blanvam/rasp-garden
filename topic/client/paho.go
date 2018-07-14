@@ -77,17 +77,20 @@ func (p *pahoClient) Connect(c chan error) {
 	c <- p.waitForToken(token)
 }
 
+// Disconnect will disconnect from the given MQTT server and clean up all client resources
 func (p *pahoClient) Disconnect(c chan error, quiesce uint) {
 	p.client.Disconnect(quiesce)
 	p.client = nil
 	c <- nil
 }
 
+// Publish will publish the given payload to the given topic with the given quality of service level
 func (p *pahoClient) Publish(c chan error, topic string, qos uint8, payload interface{}) {
 	token := p.client.Publish(topic, qos, true, payload)
 	c <- p.waitForToken(token)
 }
 
+// Subscribe will subscribe to the given topic with the given quality of service level and message handler
 func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback topic.CallbackHandler) {
 	handler := func(i paho.Client, message paho.Message) {
 		log.Printf("RECEIVED - Topic: %s, Message Length: %d bytes", message.Topic(), len(message.Payload()))
@@ -99,6 +102,7 @@ func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback t
 	c <- p.waitForToken(token)
 }
 
+// Unsubscribe will unsubscribe from the given topic
 func (p *pahoClient) Unsubscribe(c chan error, topic string) {
 	token := p.client.Unsubscribe(topic)
 	c <- p.waitForToken(token)

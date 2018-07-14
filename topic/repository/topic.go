@@ -24,6 +24,7 @@ func (t *topicRepository) IsConnected(ctx context.Context) bool {
 	if t.client == nil {
 		return false
 	}
+
 	c := make(chan bool)
 	var result bool
 
@@ -39,7 +40,12 @@ func (t *topicRepository) IsConnected(ctx context.Context) bool {
 	}
 }
 
+// Connect return error if the client cannot connect to the server.
 func (t *topicRepository) Connect(ctx context.Context) error {
+	if t.IsConnected(ctx) {
+		return entity.ErrConnected
+	}
+
 	c := make(chan error)
 
 	go t.client.Connect(c)
@@ -47,7 +53,7 @@ func (t *topicRepository) Connect(ctx context.Context) error {
 	return t.waitForError(ctx, c)
 }
 
-// Disconnect will disconnect from the given MQTT server and clean up all client resources
+// Disconnect will disconnect the client
 func (t *topicRepository) Disconnect(ctx context.Context) error {
 	if !t.IsConnected(ctx) {
 		return entity.ErrNotConnected
@@ -60,10 +66,10 @@ func (t *topicRepository) Disconnect(ctx context.Context) error {
 	return t.waitForError(ctx, c)
 }
 
-// Publish will publish the given payload to the given topic with the given quality of service level
+// Publish will publish the given payload
 func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, payload interface{}) error {
 	if !t.IsConnected(ctx) {
-		return entity.ErrConnected
+		return entity.ErrNotConnected
 	}
 
 	c := make(chan error)
@@ -73,10 +79,10 @@ func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, 
 	return t.waitForError(ctx, c)
 }
 
-// Subscribe will subscribe to the given topic with the given quality of service level and message handler
+// Subscribe will subscribe to the given topic
 func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8, callback topic.CallbackHandler) error {
 	if !t.IsConnected(ctx) {
-		return entity.ErrConnected
+		return entity.ErrNotConnected
 	}
 
 	c := make(chan error)
