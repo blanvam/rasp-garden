@@ -24,4 +24,10 @@ var (
 
 	// ErrNotConnected describre a client connection error
 	ErrNotConnected = errors.New("Client not connected")
+
+	// ErrConnected describre a client connection error
+	ErrConnected = errors.New("Client connected")
+
+	// ErrCtxDone describre Context error
+	ErrCtxDone = errors.New("Context is done")
 )

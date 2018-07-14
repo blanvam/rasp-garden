@@ -90,7 +90,10 @@ func (p *pahoClient) Publish(c chan error, topic string, qos uint8, payload inte
 
 func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback topic.CallbackHandler) {
 	handler := func(i paho.Client, message paho.Message) {
-		callback(topic, p.clientID, message.Payload())
+		log.Printf("RECEIVED - Topic: %s, Message Length: %d bytes", message.Topic(), len(message.Payload()))
+		if callback != nil {
+			callback(topic, p.clientID, message.Payload())
+		}
 	}
 	token := p.client.Subscribe(topic, qos, handler)
 	c <- p.waitForToken(token)
