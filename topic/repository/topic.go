@@ -103,7 +103,7 @@ func (t *topicRepository) waitForError(ctx context.Context, c chan error) error 
 	var result error
 	select {
 	case <-ctx.Done():
-		log.Println("Context is done (topic Publish)")
+		log.Println("Context is done")
 		return entity.ErrCtxDone
 	case result = <-c:
 		log.Println("Went to client successfuly :)")
