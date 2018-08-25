@@ -76,7 +76,7 @@ func (r *resourceUsecase) Store(c context.Context, re *entity.Resource) (bool, e
 	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
 	defer cancel()
 
-	existedResource, _ := r.GetByID(ctx, re.Pin)
+	º, _ := r.GetByID(ctx, re.Pin)
 	if existedResource != nil {
 		return false, entity.ErrConflict
 	}
@@ -84,6 +84,15 @@ func (r *resourceUsecase) Store(c context.Context, re *entity.Resource) (bool, e
 	_, err := r.repository.Store(ctx, re)
 	return err == nil, err
 }
+
+fun (r *resourceUsecase) Swap(c context.Context, id int) (error) {
+	if re.Status == entity.ResourceStatusOpen {
+		r.Close(c, id)
+	} else {
+		r.Open(c, id)
+	}
+}
+
 
 func (r *resourceUsecase) Delete(c context.Context, id int) (bool, error) {
 	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
