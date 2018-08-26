@@ -6,7 +6,6 @@ import (
 
 	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/topic"
-	paho "github.com/eclipse/paho.mqtt.golang"
 )
 
 type topicRepository struct {
@@ -21,48 +20,99 @@ func NewTopicRepository(cli topic.Client) topic.Repository {
 }
 
 // IsConnected return true if the client is connected to the server.
-func (t *topicRepository) IsConnected() bool {
+func (t *topicRepository) IsConnected(ctx context.Context) bool {
 	if t.client == nil {
 		return false
 	}
-	return t.client.IsConnected()
-}
 
-// Disconnect will disconnect from the given MQTT server and clean up all client resources
-func (t *topicRepository) Disconnect(ctx context.Context) error {
-	if t.IsConnected() {
-		t.client.Disconnect(1000)
-		t.client = nil
+	c := make(chan bool)
+	var result bool
+
+	go t.client.IsConnected(c)
+
+	select {
+	case <-ctx.Done():
+		log.Println("Context is done (topic IsConnected)")
+		return false
+	case result = <-c:
+		log.Println("Went to client successfuly :)")
+		return result == true
 	}
-	return nil
 }
 
-// Publish will publish the given payload to the given topic with the given quality of service level
-func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, payload interface{}) error {
-	if !t.IsConnected() {
+// Connect return error if the client cannot connect to the server.
+func (t *topicRepository) Connect(ctx context.Context) error {
+	if t.IsConnected(ctx) {
+		return entity.ErrConnected
+	}
+
+	c := make(chan error)
+
+	go t.client.Connect(c)
+
+	return t.waitForError(ctx, c)
+}
+
+// Disconnect will disconnect the client
+func (t *topicRepository) Disconnect(ctx context.Context) error {
+	if !t.IsConnected(ctx) {
 		return entity.ErrNotConnected
 	}
-	return t.client.Publish(topic, qos, true, payload)
+
+	c := make(chan error)
+
+	go t.client.Disconnect(c, 1000)
+
+	return t.waitForError(ctx, c)
 }
 
-// Subscribe will subscribe to the given topic with the given quality of service level and message handler
-func (t *topicRepository) Subscribe(c chan []byte, ctx context.Context, topic string, qos uint8) ([]byte, error) {
-	if !t.IsConnected() {
-		return nil, entity.ErrNotConnected
+// Publish will publish the given payload
+func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, payload interface{}) error {
+	if !t.IsConnected(ctx) {
+		return entity.ErrNotConnected
 	}
-	handler := func(i paho.Client, message paho.Message) {
-		log.Printf("RECEIVED - Topic: %s, Message Length: %d bytes", message.Topic(), len(message.Payload()))
-		if c != nil {
-			c <- message.Payload()
-		}
+
+	c := make(chan error)
+
+	go t.client.Publish(c, topic, qos, payload)
+
+	return t.waitForError(ctx, c)
+}
+
+// Subscribe will subscribe to the given topic
+func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8, callback topic.CallbackHandler) error {
+	if !t.IsConnected(ctx) {
+		return entity.ErrNotConnected
 	}
-	return t.client.Subscribe(topic, qos, handler)
+
+	c := make(chan error)
+
+	go t.client.Subscribe(c, topic, qos, callback)
+
+	return t.waitForError(ctx, c)
 }
 
 // Unsubscribe will unsubscribe from the given topic
 func (t *topicRepository) Unsubscribe(ctx context.Context, topic string) error {
-	if !t.IsConnected() {
+	if !t.IsConnected(ctx) {
 		return entity.ErrNotConnected
 	}
-	return t.client.Unsubscribe(topic)
+
+	c := make(chan error)
+
+	go t.client.Unsubscribe(c, topic)
+
+	return t.waitForError(ctx, c)
+}
+
+func (t *topicRepository) waitForError(ctx context.Context, c chan error) error {
+	var result error
+	select {
+	case <-ctx.Done():
+		log.Println("Context is done")
+		return entity.ErrCtxDone
+	case result = <-c:
+		log.Println("Went to client successfuly :)")
+		return result
+	}
 }
