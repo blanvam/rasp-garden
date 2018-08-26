@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/blanvam/rasp-garden/api"
 	"github.com/blanvam/rasp-garden/resource"
 	"github.com/blanvam/rasp-garden/resource/controller"
 	"github.com/blanvam/rasp-garden/utils"
@@ -18,7 +19,7 @@ type RequireResourceMiddleware struct {
 }
 
 // NewRequireResourceMiddleware returns a RequireResourceMiddleware
-func NewRequireResourceMiddleware(u resource.Usecase) *RequireResourceMiddleware {
+func NewRequireResourceMiddleware(u resource.Usecase) api.Middleware {
 	return &RequireResourceMiddleware{
 		usecase: u,
 	}

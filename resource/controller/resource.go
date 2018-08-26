@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/blanvam/rasp-garden/api"
 	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/resource"
 	"github.com/blanvam/rasp-garden/utils"
@@ -20,14 +21,14 @@ type HTTPResourceHandler struct {
 }
 
 // NewResourceHTTPpHandler aaa
-func NewResourceHTTPpHandler(u resource.Usecase) *HTTPResourceHandler {
+func NewResourceHTTPpHandler(u resource.Usecase) api.Controller {
 	return &HTTPResourceHandler{
 		usecase: u,
 	}
 }
 
-// ListResourcesHandler handles GET requests for Resource listing
-func (r *HTTPResourceHandler) ListResourcesHandler(res http.ResponseWriter, req *http.Request) {
+// ListHandler handles GET requests for Resource listing
+func (r *HTTPResourceHandler) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -39,8 +40,8 @@ func (r *HTTPResourceHandler) ListResourcesHandler(res http.ResponseWriter, req 
 	}
 }
 
-// CreateResourceHandler handles POST requests for resource creation
-func (r *HTTPResourceHandler) CreateResourceHandler(res http.ResponseWriter, req *http.Request) {
+// CreateHandler handles POST requests for resource creation
+func (r *HTTPResourceHandler) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -60,15 +61,15 @@ func (r *HTTPResourceHandler) CreateResourceHandler(res http.ResponseWriter, req
 	}
 }
 
-// ResourceDetailHandler handles GET requests for resource detail
-func (r *HTTPResourceHandler) ResourceDetailHandler(res http.ResponseWriter, req *http.Request) {
+// DetailHandler handles GET requests for resource detail
+func (r *HTTPResourceHandler) DetailHandler(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	resource := ctx.Value(ContextKeyResource).(*entity.Resource)
 	utils.ResponseJSON(res, resource, false)
 }
 
-// ResourceDeleteHandler handles DELETE requests for resource deletion
-func (r *HTTPResourceHandler) ResourceDeleteHandler(res http.ResponseWriter, req *http.Request) {
+// DeleteHandler handles DELETE requests for resource deletion
+func (r *HTTPResourceHandler) DeleteHandler(res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	resource := ctx.Value(ContextKeyResource).(*entity.Resource)
 
