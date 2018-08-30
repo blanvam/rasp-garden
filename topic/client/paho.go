@@ -24,7 +24,7 @@ type pahoClient struct {
 
 func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) topic.Client {
 
-	return &pahoClient{
+	pahoClient := &pahoClient{
 		options:  paho.NewClientOptions(),
 		timeout:  t,
 		clientID: cid,
@@ -32,6 +32,10 @@ func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) 
 		password: p,
 		servers:  s,
 	}
+
+	pahoClient.setOptions()
+
+	return pahoClient
 }
 
 // IsConnected return true if the client is connected
@@ -41,37 +45,6 @@ func (p *pahoClient) IsConnected(c chan bool) {
 
 // Connect try to connect to the given MQTT server
 func (p *pahoClient) Connect(c chan error) {
-
-	var store paho.Store
-	if p.storePath == "" {
-		store = paho.NewMemoryStore()
-	} else {
-		store = paho.NewFileStore(p.storePath)
-	}
-
-	// p.options.SetTLSConfig(&tls.Config{
-	//	Certificates:       []tls.Certificate{p.options.Credentials.Certificate},
-	//	InsecureSkipVerify: true,
-	//})
-
-	p.options.SetClientID(p.clientID)
-	p.options.SetUsername(p.username)
-	p.options.SetPassword(p.password)
-
-	p.options.SetCleanSession(false)
-	p.options.SetAutoReconnect(true)
-	p.options.SetProtocolVersion(4)
-	p.options.SetStore(store)
-	// p.options.SetCredentialsProvider(func() (string, string) { return p.credentialsProvider() })
-	p.options.SetOnConnectHandler(func(i paho.Client) { log.Println("Connected") })
-	p.options.SetConnectionLostHandler(func(client paho.Client, e error) { log.Printf("Connection Lost. Error: %v", e) })
-	p.options.SetOnConnectHandler(func(client paho.Client) { log.Println("Handler connected") })
-
-	for _, server := range p.servers {
-		p.options.AddBroker(server)
-	}
-
-	p.client = paho.NewClient(p.options)
 
 	token := p.client.Connect()
 	c <- p.waitForToken(token)
@@ -130,4 +103,38 @@ func (p *pahoClient) waitForToken(token paho.Token) error {
 		cancelled = true
 	}
 	return entity.ErrCancelled
+}
+
+func (p *pahoClient) setOptions() {
+
+	var store paho.Store
+	if p.storePath == "" {
+		store = paho.NewMemoryStore()
+	} else {
+		store = paho.NewFileStore(p.storePath)
+	}
+
+	// p.options.SetTLSConfig(&tls.Config{
+	//	Certificates:       []tls.Certificate{p.options.Credentials.Certificate},
+	//	InsecureSkipVerify: true,
+	//})
+
+	p.options.SetClientID(p.clientID)
+	p.options.SetUsername(p.username)
+	p.options.SetPassword(p.password)
+
+	p.options.SetCleanSession(false)
+	p.options.SetAutoReconnect(true)
+	p.options.SetProtocolVersion(4)
+	p.options.SetStore(store)
+	// p.options.SetCredentialsProvider(func() (string, string) { return p.credentialsProvider() })
+	p.options.SetOnConnectHandler(func(client paho.Client) { log.Println("Handler Connected") })
+	p.options.SetConnectionLostHandler(func(client paho.Client, e error) { log.Printf("Connection Lost. Error: %v", e) })
+
+	for _, server := range p.servers {
+		log.Printf("Adding server %s", server)
+		p.options.AddBroker(server)
+	}
+
+	p.client = paho.NewClient(p.options)
 }

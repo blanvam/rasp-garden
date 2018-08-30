@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -12,6 +14,12 @@ import (
 	_resourceRepo "github.com/blanvam/rasp-garden/resource/repository"
 	_resourceUsecase "github.com/blanvam/rasp-garden/resource/usecase"
 	"github.com/peterbourgon/diskv"
+
+	_topicClient "github.com/blanvam/rasp-garden/topic/client"
+	_topicRepo "github.com/blanvam/rasp-garden/topic/repository"
+	_topicUsecase "github.com/blanvam/rasp-garden/topic/usecase"
+
+	entity "github.com/blanvam/rasp-garden/entities"
 )
 
 const (
@@ -54,5 +62,29 @@ func main() {
 	resourceController := _resourceController.NewResourceHTTPpHandler(resourceUsecase)
 	resourceMiddleware := _resourceMiddleware.NewRequireResourceMiddleware(resourceUsecase)
 
-	api.Api(resourceRoute, resourceController, resourceMiddleware)
+	go api.Api(resourceRoute, resourceController, resourceMiddleware)
+
+	log.Println("Despues api")
+
+	t := time.Duration(1) * time.Second
+	cid := "start"
+	u := "username"
+	p := "password"
+	s := []string{"0.0.0.0:1883"}
+
+	topicClient := _topicClient.NewPahoClient(t, cid, u, p, s)
+	topicRepo := _topicRepo.NewTopicRepository(topicClient)
+	topicUsecase := _topicUsecase.NewTopicUsecase(topicRepo, 1, time.Duration(timeout)*time.Second)
+
+	c := context.Background()
+
+	topic := "pin112"
+	topicUsecase.Subscribe(c, topic)
+	msgt := time.Now()
+	msg := entity.Message{2, "Hello2", msgt, msgt}
+
+	err := topicUsecase.Publish(c, topic, &msg)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 }

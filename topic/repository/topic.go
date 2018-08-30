@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"log"
 
 	entity "github.com/blanvam/rasp-garden/entities"
@@ -35,7 +37,6 @@ func (t *topicRepository) IsConnected(ctx context.Context) bool {
 		log.Println("Context is done (topic IsConnected)")
 		return false
 	case result = <-c:
-		log.Println("Went to client successfuly :)")
 		return result == true
 	}
 }
@@ -43,7 +44,7 @@ func (t *topicRepository) IsConnected(ctx context.Context) bool {
 // Connect return error if the client cannot connect to the server.
 func (t *topicRepository) Connect(ctx context.Context) error {
 	if t.IsConnected(ctx) {
-		return entity.ErrConnected
+		return nil
 	}
 
 	c := make(chan error)
@@ -56,7 +57,7 @@ func (t *topicRepository) Connect(ctx context.Context) error {
 // Disconnect will disconnect the client
 func (t *topicRepository) Disconnect(ctx context.Context) error {
 	if !t.IsConnected(ctx) {
-		return entity.ErrNotConnected
+		return nil
 	}
 
 	c := make(chan error)
@@ -67,14 +68,21 @@ func (t *topicRepository) Disconnect(ctx context.Context) error {
 }
 
 // Publish will publish the given payload
-func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, payload interface{}) error {
+func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, msg *entity.Message) error {
 	if !t.IsConnected(ctx) {
-		return entity.ErrNotConnected
+		t.Connect(ctx)
+	}
+
+	msgByte := bytes.NewBuffer([]byte{})
+	encoder := gob.NewEncoder(msgByte)
+	err := encoder.Encode(msg)
+	if err != nil {
+		return err
 	}
 
 	c := make(chan error)
 
-	go t.client.Publish(c, topic, qos, payload)
+	go t.client.Publish(c, topic, qos, msgByte.Bytes())
 
 	return t.waitForError(ctx, c)
 }
@@ -82,7 +90,7 @@ func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, 
 // Subscribe will subscribe to the given topic
 func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8, callback topic.CallbackHandler) error {
 	if !t.IsConnected(ctx) {
-		return entity.ErrNotConnected
+		t.Connect(ctx)
 	}
 
 	c := make(chan error)
@@ -95,7 +103,7 @@ func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8
 // Unsubscribe will unsubscribe from the given topic
 func (t *topicRepository) Unsubscribe(ctx context.Context, topic string) error {
 	if !t.IsConnected(ctx) {
-		return entity.ErrNotConnected
+		t.Connect(ctx)
 	}
 
 	c := make(chan error)
@@ -112,7 +120,6 @@ func (t *topicRepository) waitForError(ctx context.Context, c chan error) error 
 		log.Println("Context is done")
 		return entity.ErrCtxDone
 	case result = <-c:
-		log.Println("Went to client successfuly :)")
 		return result
 	}
 }
