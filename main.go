@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"github.com/blanvam/rasp-garden/api"
+	"github.com/blanvam/rasp-garden/broker"
+	"github.com/blanvam/rasp-garden/database"
 	_resourceController "github.com/blanvam/rasp-garden/resource/controller"
-	_resourceDB "github.com/blanvam/rasp-garden/resource/database"
 	_resourceMiddleware "github.com/blanvam/rasp-garden/resource/middleware"
 	_resourceRepo "github.com/blanvam/rasp-garden/resource/repository"
 	_resourceUsecase "github.com/blanvam/rasp-garden/resource/usecase"
-	"github.com/peterbourgon/diskv"
 
-	_topicClient "github.com/blanvam/rasp-garden/topic/client"
 	_topicRepo "github.com/blanvam/rasp-garden/topic/repository"
 	_topicUsecase "github.com/blanvam/rasp-garden/topic/usecase"
 
@@ -30,18 +29,6 @@ const (
 	maxpin        int    = 26
 )
 
-func getdb() *diskv.Diskv {
-	bdPath := os.Getenv("BD_PATH")
-	flatTransform := func(s string) []string { return []string{} }
-	db := diskv.New(diskv.Options{
-		BasePath:     bdPath,
-		Transform:    flatTransform,
-		CacheSizeMax: 1024 * 1024,
-	})
-
-	return db
-}
-
 func checkOrSetEnv(key string, value string) {
 	if os.Getenv(key) == "" {
 		os.Setenv(key, value)
@@ -55,36 +42,39 @@ func init() {
 
 func main() {
 	log.Println("Setting up resources")
-	dbConn := getdb()
-	resourceDB := _resourceDB.NewDiskvDatabase(dbConn)
-	resourceRepo := _resourceRepo.NewResourceRepository(resourceDB, minpin, maxpin)
-	resourceUsecase := _resourceUsecase.NewResourceUsecase(resourceRepo, time.Duration(timeout)*time.Second)
-	resourceController := _resourceController.NewResourceHTTPpHandler(resourceUsecase)
-	resourceMiddleware := _resourceMiddleware.NewRequireResourceMiddleware(resourceUsecase)
-
-	go api.Api(resourceRoute, resourceController, resourceMiddleware)
-
-	log.Println("Despues api")
+	bdPath := os.Getenv("BD_PATH")
+	database := database.NewDiskvDatabase(bdPath)
 
 	t := time.Duration(1) * time.Second
 	cid := "start"
 	u := "username"
 	p := "password"
 	s := []string{"0.0.0.0:1883"}
+	brokerClient := broker.NewPahoClient(t, cid, u, p, s)
 
-	topicClient := _topicClient.NewPahoClient(t, cid, u, p, s)
-	topicRepo := _topicRepo.NewTopicRepository(topicClient)
-	topicUsecase := _topicUsecase.NewTopicUsecase(topicRepo, 1, time.Duration(timeout)*time.Second)
+	resourceRepo := _resourceRepo.NewResourceRepository(database, minpin, maxpin)
+	resourceUsecase := _resourceUsecase.NewResourceUsecase(resourceRepo, time.Duration(timeout)*time.Second)
+	resourceController := _resourceController.NewResourceHTTPpHandler(resourceUsecase)
+	resourceMiddleware := _resourceMiddleware.NewRequireResourceMiddleware(resourceUsecase)
+
+	log.Println("Despues api")
+
+	topicRepo := _topicRepo.NewTopicRepository(brokerClient)
+	var qoS uint8
+	qoS = 2 // At most once (0) // At least once (1) //Exactly once (2).
+	topicUsecase := _topicUsecase.NewTopicUsecase(topicRepo, qoS, time.Duration(timeout)*time.Second)
 
 	c := context.Background()
 
-	topic := "pin112"
+	topic := "pin12"
 	topicUsecase.Subscribe(c, topic)
 	msgt := time.Now()
-	msg := entity.Message{2, "Hello2", msgt, msgt}
+	msg := entity.Message{2, "Hello eyy", msgt, msgt}
 
 	err := topicUsecase.Publish(c, topic, &msg)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
+
+	api.Api(resourceRoute, resourceController, resourceMiddleware)
 }

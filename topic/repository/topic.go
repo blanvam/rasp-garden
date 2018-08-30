@@ -6,16 +6,17 @@ import (
 	"encoding/gob"
 	"log"
 
+	"github.com/blanvam/rasp-garden/broker"
 	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/topic"
 )
 
 type topicRepository struct {
-	client topic.Client
+	client broker.Client
 }
 
 // NewTopicRepository creates an topicRepository instance.
-func NewTopicRepository(cli topic.Client) topic.Repository {
+func NewTopicRepository(cli broker.Client) topic.Repository {
 	return &topicRepository{
 		client: cli,
 	}
@@ -70,7 +71,7 @@ func (t *topicRepository) Disconnect(ctx context.Context) error {
 // Publish will publish the given payload
 func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, msg *entity.Message) error {
 	if !t.IsConnected(ctx) {
-		t.Connect(ctx)
+		return entity.ErrNotConnected
 	}
 
 	msgByte := bytes.NewBuffer([]byte{})
@@ -88,9 +89,9 @@ func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, 
 }
 
 // Subscribe will subscribe to the given topic
-func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8, callback topic.CallbackHandler) error {
+func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8, callback broker.CallbackHandler) error {
 	if !t.IsConnected(ctx) {
-		t.Connect(ctx)
+		return entity.ErrNotConnected
 	}
 
 	c := make(chan error)
@@ -103,7 +104,7 @@ func (t *topicRepository) Subscribe(ctx context.Context, topic string, qos uint8
 // Unsubscribe will unsubscribe from the given topic
 func (t *topicRepository) Unsubscribe(ctx context.Context, topic string) error {
 	if !t.IsConnected(ctx) {
-		t.Connect(ctx)
+		return entity.ErrNotConnected
 	}
 
 	c := make(chan error)

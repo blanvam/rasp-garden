@@ -1,4 +1,4 @@
-package client
+package broker
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	entity "github.com/blanvam/rasp-garden/entities"
-	"github.com/blanvam/rasp-garden/topic"
 	paho "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -22,7 +21,8 @@ type pahoClient struct {
 	certificate CredentialsProvider
 }
 
-func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) topic.Client {
+// NewPahoClient return a broker paho client
+func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) Client {
 
 	pahoClient := &pahoClient{
 		options:  paho.NewClientOptions(),
@@ -64,7 +64,7 @@ func (p *pahoClient) Publish(c chan error, topic string, qos uint8, payload inte
 }
 
 // Subscribe will subscribe to the given topic with the given quality of service level and message handler
-func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback topic.CallbackHandler) {
+func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback CallbackHandler) {
 	handler := func(i paho.Client, message paho.Message) {
 		log.Printf("RECEIVED - Topic: %s, Message Length: %d bytes", message.Topic(), len(message.Payload()))
 		if callback != nil {

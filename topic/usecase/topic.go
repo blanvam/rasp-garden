@@ -20,11 +20,18 @@ type topicUsecase struct {
 
 // NewTopicUsecase interface
 func NewTopicUsecase(r topic.Repository, qos uint8, timeout time.Duration) topic.Usecase {
-	return &topicUsecase{
+	topicUsecase := &topicUsecase{
 		repository:     r,
 		qos:            qos,
 		contextTimeout: timeout,
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), topicUsecase.contextTimeout)
+	defer cancel()
+
+	topicUsecase.repository.Connect(ctx)
+
+	return topicUsecase
 }
 
 func (t *topicUsecase) Publish(c context.Context, topic string, msg *entity.Message) error {
