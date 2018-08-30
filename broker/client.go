@@ -1,7 +1,9 @@
 package broker
 
+import "context"
+
 // CallbackHandler interface func definition for a broker callback handler
-type CallbackHandler func(topic string, clientID string, config []byte)
+type CallbackHandler func(c context.Context, topic string, clientID string, config []byte)
 
 // CredentialsProvider should return the current username and password for the MQTT client to use.
 type CredentialsProvider func() (username string, password string)

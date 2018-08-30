@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/blanvam/rasp-garden/api"
@@ -65,9 +66,8 @@ func main() {
 	topicUsecase := _topicUsecase.NewTopicUsecase(topicRepo, qoS, time.Duration(timeout)*time.Second)
 
 	c := context.Background()
-
-	topic := "pin12"
-	topicUsecase.Subscribe(c, topic)
+	topic := "12"
+	topicUsecase.Subscribe(c, topic, Receive)
 	msgt := time.Now()
 	msg := entity.Resource{"E1", "Prueba", 12, entity.ResourceKindOut, entity.ResourceStatusClosed, msgt, msgt}
 
@@ -77,4 +77,23 @@ func main() {
 	}
 
 	api.Api(resourceRoute, resourceController, resourceMiddleware)
+}
+
+// Receive payload from broker
+func Receive(c context.Context, topic string, id string, payload []byte) {
+	database := database.NewDiskvDatabase(os.Getenv("BD_PATH"))
+	resourceRepo := _resourceRepo.NewResourceRepository(database, minpin, maxpin)
+	resourceUsecase := _resourceUsecase.NewResourceUsecase(resourceRepo, time.Duration(timeout)*time.Second)
+	resoruce, err := resourceUsecase.BindBytes(c, payload)
+	if err != nil {
+		log.Printf("%v\n", err)
+	}
+	log.Println(fmt.Sprintf("Resource '%d' with status '%s' received from topic '%s'", resoruce.Pin, resoruce.Status, topic))
+	if topic != strconv.Itoa(resoruce.Pin) {
+		return
+	}
+	saved, err := resourceUsecase.Update(c, resoruce)
+	if saved != true {
+		resourceUsecase.Store(c, resoruce)
+	}
 }

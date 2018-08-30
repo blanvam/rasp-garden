@@ -68,7 +68,7 @@ func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback C
 	handler := func(i paho.Client, message paho.Message) {
 		log.Printf("RECEIVED - Topic: %s, Message Length: %d bytes", message.Topic(), len(message.Payload()))
 		if callback != nil {
-			callback(topic, p.clientID, message.Payload())
+			callback(context.Background(), topic, p.clientID, message.Payload())
 		}
 	}
 	token := p.client.Subscribe(topic, qos, handler)

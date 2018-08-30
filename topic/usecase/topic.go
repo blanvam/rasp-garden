@@ -1,12 +1,10 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
-	"fmt"
-	"log"
 	"time"
+
+	"github.com/blanvam/rasp-garden/broker"
 
 	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/topic"
@@ -46,19 +44,9 @@ func (t *topicUsecase) Publish(c context.Context, topic string, r *entity.Resour
 	return nil
 }
 
-func (t *topicUsecase) Subscribe(c context.Context, topic string) error {
+func (t *topicUsecase) Subscribe(c context.Context, topic string, callback broker.CallbackHandler) error {
 	ctx, cancel := context.WithTimeout(c, t.contextTimeout)
 	defer cancel()
-
-	callback := func(topic string, id string, payload []byte) {
-		resource := &entity.Resource{}
-		decoder := gob.NewDecoder(bytes.NewBuffer(payload))
-		err := decoder.Decode(resource)
-		if err != nil {
-			log.Println("Error decoding resource payload from broker")
-		}
-		log.Println(fmt.Sprintf("Resource '%d' with status '%s' successfuly received from broker", resource.Pin, resource.Status))
-	}
 
 	err := t.repository.Subscribe(ctx, topic, t.qos, callback)
 	return err
