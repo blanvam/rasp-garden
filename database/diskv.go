@@ -4,7 +4,6 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/blanvam/rasp-garden/resource"
 	"github.com/peterbourgon/diskv"
 )
 
@@ -13,9 +12,10 @@ type diskvDatabase struct {
 }
 
 // NewDiskvDatabase aaa
-func NewDiskvDatabase(Conn *diskv.Diskv) resource.Database {
+func NewDiskvDatabase(bdPath string) Database {
+	conn := getdb(bdPath)
 	return &diskvDatabase{
-		connection: Conn,
+		connection: conn,
 	}
 }
 
@@ -38,4 +38,14 @@ func (d *diskvDatabase) Write(c chan bool, id int, r io.Reader) {
 func (d *diskvDatabase) Delete(c chan error, id int) {
 	err := d.connection.Erase(strconv.Itoa(id))
 	c <- err
+}
+
+func getdb(bdPath string) *diskv.Diskv {
+	flatTransform := func(s string) []string { return []string{} }
+	db := diskv.New(diskv.Options{
+		BasePath:     bdPath,
+		Transform:    flatTransform,
+		CacheSizeMax: 1024 * 1024,
+	})
+	return db
 }

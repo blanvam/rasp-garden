@@ -1,4 +1,4 @@
-package client
+package broker
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	entity "github.com/blanvam/rasp-garden/entities"
-	"github.com/blanvam/rasp-garden/topic"
 	paho "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -22,9 +21,10 @@ type pahoClient struct {
 	certificate CredentialsProvider
 }
 
-func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) topic.Client {
+// NewPahoClient return a broker paho client
+func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) Client {
 
-	return &pahoClient{
+	pahoClient := &pahoClient{
 		options:  paho.NewClientOptions(),
 		timeout:  t,
 		clientID: cid,
@@ -32,6 +32,10 @@ func NewPahoClient(t time.Duration, cid string, u string, p string, s []string) 
 		password: p,
 		servers:  s,
 	}
+
+	pahoClient.setOptions()
+
+	return pahoClient
 }
 
 // IsConnected return true if the client is connected
@@ -41,37 +45,6 @@ func (p *pahoClient) IsConnected(c chan bool) {
 
 // Connect try to connect to the given MQTT server
 func (p *pahoClient) Connect(c chan error) {
-
-	var store paho.Store
-	if p.storePath == "" {
-		store = paho.NewMemoryStore()
-	} else {
-		store = paho.NewFileStore(p.storePath)
-	}
-
-	// p.options.SetTLSConfig(&tls.Config{
-	//	Certificates:       []tls.Certificate{p.options.Credentials.Certificate},
-	//	InsecureSkipVerify: true,
-	//})
-
-	p.options.SetClientID(p.clientID)
-	p.options.SetUsername(p.username)
-	p.options.SetPassword(p.password)
-
-	p.options.SetCleanSession(false)
-	p.options.SetAutoReconnect(true)
-	p.options.SetProtocolVersion(4)
-	p.options.SetStore(store)
-	// p.options.SetCredentialsProvider(func() (string, string) { return p.credentialsProvider() })
-	p.options.SetOnConnectHandler(func(i paho.Client) { log.Println("Connected") })
-	p.options.SetConnectionLostHandler(func(client paho.Client, e error) { log.Printf("Connection Lost. Error: %v", e) })
-	p.options.SetOnConnectHandler(func(client paho.Client) { log.Println("Handler connected") })
-
-	for _, server := range p.servers {
-		p.options.AddBroker(server)
-	}
-
-	p.client = paho.NewClient(p.options)
 
 	token := p.client.Connect()
 	c <- p.waitForToken(token)
@@ -91,11 +64,11 @@ func (p *pahoClient) Publish(c chan error, topic string, qos uint8, payload inte
 }
 
 // Subscribe will subscribe to the given topic with the given quality of service level and message handler
-func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback topic.CallbackHandler) {
+func (p *pahoClient) Subscribe(c chan error, topic string, qos uint8, callback CallbackHandler) {
 	handler := func(i paho.Client, message paho.Message) {
 		log.Printf("RECEIVED - Topic: %s, Message Length: %d bytes", message.Topic(), len(message.Payload()))
 		if callback != nil {
-			callback(topic, p.clientID, message.Payload())
+			callback(context.Background(), topic, p.clientID, message.Payload())
 		}
 	}
 	token := p.client.Subscribe(topic, qos, handler)
@@ -130,4 +103,38 @@ func (p *pahoClient) waitForToken(token paho.Token) error {
 		cancelled = true
 	}
 	return entity.ErrCancelled
+}
+
+func (p *pahoClient) setOptions() {
+
+	var store paho.Store
+	if p.storePath == "" {
+		store = paho.NewMemoryStore()
+	} else {
+		store = paho.NewFileStore(p.storePath)
+	}
+
+	// p.options.SetTLSConfig(&tls.Config{
+	//	Certificates:       []tls.Certificate{p.options.Credentials.Certificate},
+	//	InsecureSkipVerify: true,
+	//})
+
+	p.options.SetClientID(p.clientID)
+	p.options.SetUsername(p.username)
+	p.options.SetPassword(p.password)
+
+	p.options.SetCleanSession(false)
+	p.options.SetAutoReconnect(true)
+	p.options.SetProtocolVersion(4)
+	p.options.SetStore(store)
+	// p.options.SetCredentialsProvider(func() (string, string) { return p.credentialsProvider() })
+	p.options.SetOnConnectHandler(func(client paho.Client) { log.Println("Handler Connected") })
+	p.options.SetConnectionLostHandler(func(client paho.Client, e error) { log.Printf("Connection Lost. Error: %v", e) })
+
+	for _, server := range p.servers {
+		log.Printf("Adding server %s", server)
+		p.options.AddBroker(server)
+	}
+
+	p.client = paho.NewClient(p.options)
 }

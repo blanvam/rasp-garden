@@ -1,7 +1,9 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"time"
 
 	entity "github.com/blanvam/rasp-garden/entities"
@@ -32,6 +34,16 @@ func (r *resourceUsecase) Bind(ctx context.Context, request *entity.ResourceRequ
 		UpdatedAt:   time.Now(),
 	}
 
+	return resource, nil
+}
+
+func (r *resourceUsecase) BindBytes(c context.Context, payload []byte) (*entity.Resource, error) {
+	resource := &entity.Resource{}
+	decoder := gob.NewDecoder(bytes.NewBuffer(payload))
+	err := decoder.Decode(resource)
+	if err != nil {
+		return resource, entity.ErrBrokerReceived
+	}
 	return resource, nil
 }
 
@@ -67,7 +79,7 @@ func (r *resourceUsecase) Update(c context.Context, re *entity.Resource) (bool, 
 	if existedResource == nil {
 		return false, entity.ErrNotFound
 	}
-
+	re.CreatedAt = existedResource.CreatedAt
 	_, err := r.repository.Update(ctx, re)
 	return err != nil, err
 }
