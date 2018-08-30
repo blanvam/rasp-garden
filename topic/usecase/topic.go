@@ -34,11 +34,11 @@ func NewTopicUsecase(r topic.Repository, qos uint8, timeout time.Duration) topic
 	return topicUsecase
 }
 
-func (t *topicUsecase) Publish(c context.Context, topic string, msg *entity.Message) error {
+func (t *topicUsecase) Publish(c context.Context, topic string, r *entity.Resource) error {
 	ctx, cancel := context.WithTimeout(c, t.contextTimeout)
 	defer cancel()
 
-	err := t.repository.Publish(ctx, topic, t.qos, msg)
+	err := t.repository.Publish(ctx, topic, t.qos, r)
 	if err != nil {
 		return err
 	}
@@ -51,13 +51,13 @@ func (t *topicUsecase) Subscribe(c context.Context, topic string) error {
 	defer cancel()
 
 	callback := func(topic string, id string, payload []byte) {
-		message := &entity.Message{}
+		resource := &entity.Resource{}
 		decoder := gob.NewDecoder(bytes.NewBuffer(payload))
-		err := decoder.Decode(message)
+		err := decoder.Decode(resource)
 		if err != nil {
-			log.Println("Error decoding message payload from broker")
+			log.Println("Error decoding resource payload from broker")
 		}
-		log.Println(fmt.Sprintf("Message '%d' with content '%s' successfuly received from broker", message.ID, message.Content))
+		log.Println(fmt.Sprintf("Resource '%d' with status '%s' successfuly received from broker", resource.Pin, resource.Status))
 	}
 
 	err := t.repository.Subscribe(ctx, topic, t.qos, callback)

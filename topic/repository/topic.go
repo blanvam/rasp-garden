@@ -69,21 +69,21 @@ func (t *topicRepository) Disconnect(ctx context.Context) error {
 }
 
 // Publish will publish the given payload
-func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, msg *entity.Message) error {
+func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, r *entity.Resource) error {
 	if !t.IsConnected(ctx) {
 		return entity.ErrNotConnected
 	}
 
-	msgByte := bytes.NewBuffer([]byte{})
-	encoder := gob.NewEncoder(msgByte)
-	err := encoder.Encode(msg)
+	rByte := bytes.NewBuffer([]byte{})
+	encoder := gob.NewEncoder(rByte)
+	err := encoder.Encode(r)
 	if err != nil {
 		return err
 	}
 
 	c := make(chan error)
 
-	go t.client.Publish(c, topic, qos, msgByte.Bytes())
+	go t.client.Publish(c, topic, qos, rByte.Bytes())
 
 	return t.waitForError(ctx, c)
 }

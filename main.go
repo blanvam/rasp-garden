@@ -69,7 +69,7 @@ func main() {
 	topic := "pin12"
 	topicUsecase.Subscribe(c, topic)
 	msgt := time.Now()
-	msg := entity.Message{2, "Hello eyy", msgt, msgt}
+	msg := entity.Resource{"E1", "Prueba", 12, entity.ResourceKindOut, entity.ResourceStatusClosed, msgt, msgt}
 
 	err := topicUsecase.Publish(c, topic, &msg)
 	if err != nil {
