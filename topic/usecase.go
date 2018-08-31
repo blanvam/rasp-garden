@@ -4,12 +4,11 @@ import (
 	"context"
 
 	broker "github.com/blanvam/rasp-garden/broker"
-	entity "github.com/blanvam/rasp-garden/entities"
 )
 
 // Usecase interface definition for case of use
 type Usecase interface {
-	Publish(ctx context.Context, topic string, r *entity.Resource) error
+	Publish(ctx context.Context, topic string, i interface{}) error
 	Subscribe(ctx context.Context, topic string, callback broker.CallbackHandler) error
 	Unsubscribe(ctx context.Context, topic string) error
 }

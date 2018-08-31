@@ -68,10 +68,19 @@ func main() {
 	c := context.Background()
 	topic := "12"
 	topicUsecase.Subscribe(c, topic, Receive)
-	msgt := time.Now()
-	msg := entity.Resource{"E1", "Prueba", 12, entity.ResourceKindOut, entity.ResourceStatusOpen, msgt, msgt}
+	// msgt := time.Now()
 
-	err := topicUsecase.Publish(c, topic, &msg)
+	type FF struct {
+		Name        string
+		Description string
+		Pin         int
+		Kind        entity.ResourceKind
+		Status      entity.ResourceStatus
+	}
+
+	rsrc := FF{"E2", "Prueba2", 12, entity.ResourceKindOut, entity.ResourceStatusClosed}
+
+	err := topicUsecase.Publish(c, topic, &rsrc)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
@@ -95,6 +104,6 @@ func Receive(c context.Context, topic string, id string, payload []byte) {
 	err = resourceUsecase.Update(c, resoruce)
 	if err != nil {
 		log.Printf("%v\n", err)
-		// resourceUsecase.Store(c, resoruce) Resources can only be created from api
+		resourceUsecase.Store(c, resoruce) // Resources can only be created from api
 	}
 }

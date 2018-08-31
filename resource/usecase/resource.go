@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"time"
 
 	entity "github.com/blanvam/rasp-garden/entities"
@@ -67,6 +69,8 @@ func (r *resourceUsecase) GetByID(c context.Context, id int) (*entity.Resource, 
 		return nil, err
 	}
 
+	log.Println(fmt.Sprintf("Pin --> '%d' \n Name --> '%s' \n Description --> '%s' \n Kind --> '%s' \n Status --> '%s' \n CreatedAt --> '%s' \n UpdatedAt --> '%s' ", res.Pin, res.Name, res.Description, res.Kind, res.Status, res.CreatedAt, res.UpdatedAt))
+
 	return res, nil
 }
 
@@ -78,6 +82,7 @@ func (r *resourceUsecase) Update(c context.Context, re *entity.Resource) error {
 	if existedResource == nil {
 		return entity.ErrNotFound
 	}
+
 	re.CreatedAt = existedResource.CreatedAt
 	_, err := r.repository.Update(ctx, re)
 	if existedResource.Status != re.Status {

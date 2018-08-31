@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"github.com/blanvam/rasp-garden/broker"
@@ -68,19 +67,14 @@ func (t *topicRepository) Disconnect(ctx context.Context) error {
 }
 
 // Publish will publish the given payload
-func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, r *entity.Resource) error {
+func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, bytes []byte) error {
 	if !t.IsConnected(ctx) {
 		return entity.ErrNotConnected
 	}
 
-	rByte, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
 	c := make(chan error)
 
-	go t.client.Publish(c, topic, qos, rByte)
+	go t.client.Publish(c, topic, qos, bytes)
 
 	return t.waitForError(ctx, c)
 }

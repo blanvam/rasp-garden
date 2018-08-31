@@ -98,6 +98,7 @@ func (r *resourceRepository) Store(ctx context.Context, re *entity.Resource) (in
 	if r.minPin > re.Pin || re.Pin > r.maxPin {
 		return re.Pin, fmt.Errorf("Resource PIN must be between %d and %d", r.minPin, r.maxPin)
 	}
+	re.CreatedAt = time.Now()
 	return r.save(ctx, re)
 }
 

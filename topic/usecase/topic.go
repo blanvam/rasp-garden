@@ -2,11 +2,11 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/blanvam/rasp-garden/broker"
 
-	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/topic"
 )
 
@@ -32,11 +32,16 @@ func NewTopicUsecase(r topic.Repository, qos uint8, timeout time.Duration) topic
 	return topicUsecase
 }
 
-func (t *topicUsecase) Publish(c context.Context, topic string, r *entity.Resource) error {
+func (t *topicUsecase) Publish(c context.Context, topic string, r interface{}) error {
 	ctx, cancel := context.WithTimeout(c, t.contextTimeout)
 	defer cancel()
 
-	err := t.repository.Publish(ctx, topic, t.qos, r)
+	rByte, err := json.Marshal(r)
+	if err != nil {
+		return err
+	}
+
+	err = t.repository.Publish(ctx, topic, t.qos, rByte)
 	if err != nil {
 		return err
 	}
