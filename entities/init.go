@@ -1,23 +1,23 @@
 package entities
 
-// resourceKind is a string that determines the resource' kind
-type resourceKind string
+// ResourceKind is a string that determines the resource' kind
+type ResourceKind string
 
-// resourceStatus is a string that determines the resource' state
-type resourceStatus string
+// ResourceStatus is a string that determines the resource' state
+type ResourceStatus string
 
 const (
 	// ResourceKindIn refer to input pin
-	ResourceKindIn = resourceKind("in")
+	ResourceKindIn = ResourceKind("in")
 
 	// ResourceKindOut refer to output pin
-	ResourceKindOut = resourceKind("out")
+	ResourceKindOut = ResourceKind("out")
 
 	// ResourceStatusOpen refer to open pin status
-	ResourceStatusOpen = resourceStatus("open")
+	ResourceStatusOpen = ResourceStatus("open")
 
 	// ResourceStatusClosed refer to closed pin status
-	ResourceStatusClosed = resourceStatus("closed")
+	ResourceStatusClosed = ResourceStatus("closed")
 )
 
 // ResourceList is a list of Resource instances

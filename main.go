@@ -69,7 +69,7 @@ func main() {
 	topic := "12"
 	topicUsecase.Subscribe(c, topic, Receive)
 	msgt := time.Now()
-	msg := entity.Resource{"E1", "Prueba", 12, entity.ResourceKindOut, entity.ResourceStatusClosed, msgt, msgt}
+	msg := entity.Resource{"E1", "Prueba", 12, entity.ResourceKindOut, entity.ResourceStatusOpen, msgt, msgt}
 
 	err := topicUsecase.Publish(c, topic, &msg)
 	if err != nil {
@@ -92,8 +92,9 @@ func Receive(c context.Context, topic string, id string, payload []byte) {
 	if topic != strconv.Itoa(resoruce.Pin) {
 		return
 	}
-	saved, err := resourceUsecase.Update(c, resoruce)
-	if saved != true {
-		resourceUsecase.Store(c, resoruce)
+	err = resourceUsecase.Update(c, resoruce)
+	if err != nil {
+		log.Printf("%v\n", err)
+		// resourceUsecase.Store(c, resoruce) Resources can only be created from api
 	}
 }

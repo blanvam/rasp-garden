@@ -1,9 +1,8 @@
 package repository
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
+	"encoding/json"
 	"log"
 
 	"github.com/blanvam/rasp-garden/broker"
@@ -74,16 +73,14 @@ func (t *topicRepository) Publish(ctx context.Context, topic string, qos uint8, 
 		return entity.ErrNotConnected
 	}
 
-	rByte := bytes.NewBuffer([]byte{})
-	encoder := gob.NewEncoder(rByte)
-	err := encoder.Encode(r)
+	rByte, err := json.Marshal(r)
 	if err != nil {
 		return err
 	}
 
 	c := make(chan error)
 
-	go t.client.Publish(c, topic, qos, rByte.Bytes())
+	go t.client.Publish(c, topic, qos, rByte)
 
 	return t.waitForError(ctx, c)
 }

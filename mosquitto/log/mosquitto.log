@@ -1,0 +1,10 @@
+1534872271: mosquitto version 1.4.12 (build date 2017-06-01 13:03:46+0000) starting
+1534872271: Config loaded from /mosquitto/config/mosquitto.conf.
+1534872271: Opening ipv4 listen socket on port 1883.
+1534872271: Opening ipv6 listen socket on port 1883.
+1534872458: mosquitto version 1.4.12 terminating
+1534872643: mosquitto version 1.4.12 (build date 2017-06-01 13:03:46+0000) starting
+1534872643: Config loaded from /mosquitto/config/mosquitto.conf.
+1534872643: Opening ipv4 listen socket on port 1883.
+1534872643: Opening ipv6 listen socket on port 1883.
+1534872700: mosquitto version 1.4.12 terminating
