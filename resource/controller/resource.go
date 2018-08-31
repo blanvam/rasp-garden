@@ -52,9 +52,9 @@ func (r *HTTPResourceHandler) CreateHandler(res http.ResponseWriter, req *http.R
 	}
 
 	memResource, _ := r.usecase.Bind(ctx, &resourceRequest)
-	stored, err := r.usecase.Store(ctx, memResource)
+	err = r.usecase.Store(ctx, memResource)
 
-	if stored == false {
+	if err != nil {
 		utils.ResponseError(res, err.Error(), http.StatusBadRequest)
 	} else {
 		res.WriteHeader(http.StatusCreated)

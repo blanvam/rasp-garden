@@ -4,33 +4,39 @@ import "errors"
 
 var (
 
-	// ErrInternalServer describre error
+	// ErrInternalServer describe error
 	ErrInternalServer = errors.New("Internal Server Error")
 
-	// ErrNotFound describre error not found
+	// ErrNotFound describe error not found
 	ErrNotFound = errors.New("Your requested Item is not found")
 
-	// ErrBrokerReceived describre error not found
+	// ErrBrokerReceived describe error not found
 	ErrBrokerReceived = errors.New("Error decoding resource payload received from broker")
 
-	// ErrConflict describre a conflict error
+	// ErrConflict describe a conflict error
 	ErrConflict = errors.New("Your Item already exist")
 
-	// ErrStore describre a store error
+	// ErrStore describe a store error
 	ErrStore = errors.New("Your Item could not be stored")
 
-	// ErrInvalid describre a restriction error
+	// ErrInvalid describe a restriction error
 	ErrInvalid = errors.New("Your Item is invalid, review restrictions")
 
-	// ErrCancelled describre a client error
+	// ErrCancelled describe a client error
 	ErrCancelled = errors.New("Operation was cancelled or timed out")
 
-	// ErrNotConnected describre a client connection error
+	// ErrNotConnected describe a client connection error
 	ErrNotConnected = errors.New("Client not connected")
 
-	// ErrConnected describre a client connection error
+	// ErrConnected describe a client connection error
 	ErrConnected = errors.New("Client connected")
 
-	// ErrCtxDone describre Context error
+	// ErrCtxDone describe Context error
 	ErrCtxDone = errors.New("Context is done")
+
+	// ErrRGPIO describe error connecting to Raspberry Pi GPIO
+	ErrRGPIO = errors.New("Error connecting to Raspberry Pi GPIO")
+
+	// ErrInvalidRGPIO describe error for invalid action given
+	ErrInvalidRGPIO = errors.New("Invalid action, should be open or close")
 )

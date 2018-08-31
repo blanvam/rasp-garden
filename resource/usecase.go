@@ -12,7 +12,7 @@ type Usecase interface {
 	BindBytes(ctx context.Context, payload []byte) (*entity.Resource, error)
 	All(ctx context.Context) ([]*entity.Resource, error)
 	GetByID(ctx context.Context, id int) (*entity.Resource, error)
-	Update(ctx context.Context, r *entity.Resource) (bool, error)
-	Store(ctx context.Context, r *entity.Resource) (bool, error)
+	Update(ctx context.Context, r *entity.Resource) error
+	Store(ctx context.Context, r *entity.Resource) error
 	Delete(ctx context.Context, id int) (bool, error)
 }

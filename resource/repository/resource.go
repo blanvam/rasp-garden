@@ -114,34 +114,3 @@ func (r *resourceRepository) Delete(ctx context.Context, id int) (bool, error) {
 		return result == nil, result
 	}
 }
-
-
-func (r *resourceUsecase) Open() (c context.Context, re *entity.Resource) {
-	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
-	defer cancel()
-
-	existedResource, _ := r.GetByID(ctx, re.Pin)
-	if existedResource == nil {
-		return false, entity.ErrNotFound
-	}
-
-	if re.Status == entity.ResourceStatusClosed {
-		pin := gpio.NewOutput(number, rpio.Low)
-		pin.High()	
-	}
-}
-
-func (r *resourceUsecase) Close() (c context.Context, re *entity.Resource) {
-	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
-	defer cancel()
-
-	existedResource, _ := r.GetByID(ctx, re.Pin)
-	if existedResource == nil {
-		return false, entity.ErrNotFound
-	}
-
-	if re.Status == entity.ResourceStatusOpen {
-		pin := gpio.NewOutput(number, rpio.High)
-		pin.Low()
-	}
-}

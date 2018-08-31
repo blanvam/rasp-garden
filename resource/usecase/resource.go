@@ -1,13 +1,13 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
+	"encoding/json"
 	"time"
 
 	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/resource"
+	"github.com/blanvam/rasp-garden/utils"
 )
 
 type resourceUsecase struct {
@@ -38,11 +38,10 @@ func (r *resourceUsecase) Bind(ctx context.Context, request *entity.ResourceRequ
 }
 
 func (r *resourceUsecase) BindBytes(c context.Context, payload []byte) (*entity.Resource, error) {
+
 	resource := &entity.Resource{}
-	decoder := gob.NewDecoder(bytes.NewBuffer(payload))
-	err := decoder.Decode(resource)
-	if err != nil {
-		return resource, entity.ErrBrokerReceived
+	if err := json.Unmarshal(payload, &resource); err != nil {
+		return nil, entity.ErrBrokerReceived
 	}
 	return resource, nil
 }
@@ -71,40 +70,35 @@ func (r *resourceUsecase) GetByID(c context.Context, id int) (*entity.Resource, 
 	return res, nil
 }
 
-func (r *resourceUsecase) Update(c context.Context, re *entity.Resource) (bool, error) {
+func (r *resourceUsecase) Update(c context.Context, re *entity.Resource) error {
 	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
 	defer cancel()
 
 	existedResource, _ := r.GetByID(ctx, re.Pin)
 	if existedResource == nil {
-		return false, entity.ErrNotFound
+		return entity.ErrNotFound
 	}
 	re.CreatedAt = existedResource.CreatedAt
 	_, err := r.repository.Update(ctx, re)
-	return err != nil, err
+	if existedResource.Status != re.Status {
+		r.pinChange(re, existedResource.Status)
+	}
+	return err
 }
 
-func (r *resourceUsecase) Store(c context.Context, re *entity.Resource) (bool, error) {
+func (r *resourceUsecase) Store(c context.Context, re *entity.Resource) error {
 	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
 	defer cancel()
 
-	º, _ := r.GetByID(ctx, re.Pin)
+	existedResource, _ := r.GetByID(ctx, re.Pin)
 	if existedResource != nil {
-		return false, entity.ErrConflict
+		return entity.ErrConflict
 	}
 
 	_, err := r.repository.Store(ctx, re)
-	return err == nil, err
+	r.pinChange(re, re.Status)
+	return err
 }
-
-fun (r *resourceUsecase) Swap(c context.Context, id int) (error) {
-	if re.Status == entity.ResourceStatusOpen {
-		r.Close(c, id)
-	} else {
-		r.Open(c, id)
-	}
-}
-
 
 func (r *resourceUsecase) Delete(c context.Context, id int) (bool, error) {
 	ctx, cancel := context.WithTimeout(c, r.contextTimeout)
@@ -114,6 +108,13 @@ func (r *resourceUsecase) Delete(c context.Context, id int) (bool, error) {
 	if existedResource == nil {
 		return false, entity.ErrNotFound
 	}
-
+	r.pinChange(existedResource, entity.ResourceStatusOpen)
 	return r.repository.Delete(ctx, id)
+}
+
+func (r *resourceUsecase) pinChange(re *entity.Resource, a entity.ResourceStatus) error {
+	if re.Kind == entity.ResourceKindIn {
+		return utils.GPIOInChange(re.Pin, re.Status == entity.ResourceStatusClosed)
+	}
+	return utils.GPIOOutChange(re.Pin, re.Status == entity.ResourceStatusClosed)
 }

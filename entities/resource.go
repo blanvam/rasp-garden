@@ -9,8 +9,8 @@ type Resource struct {
 	Name        string
 	Description string
 	Pin         int
-	Kind        resourceKind
-	Status      resourceStatus
+	Kind        ResourceKind
+	Status      ResourceStatus
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -20,5 +20,5 @@ type ResourceRequest struct {
 	Name        string
 	Description string
 	Pin         int
-	Kind        resourceKind
+	Kind        ResourceKind
 }
