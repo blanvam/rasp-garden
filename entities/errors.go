@@ -10,6 +10,9 @@ var (
 	// ErrNotFound describre error not found
 	ErrNotFound = errors.New("Your requested Item is not found")
 
+	// ErrBrokerReceived describre error not found
+	ErrBrokerReceived = errors.New("Error decoding resource payload received from broker")
+
 	// ErrConflict describre a conflict error
 	ErrConflict = errors.New("Your Item already exist")
 
@@ -24,4 +27,10 @@ var (
 
 	// ErrNotConnected describre a client connection error
 	ErrNotConnected = errors.New("Client not connected")
+
+	// ErrConnected describre a client connection error
+	ErrConnected = errors.New("Client connected")
+
+	// ErrCtxDone describre Context error
+	ErrCtxDone = errors.New("Context is done")
 )

@@ -14,3 +14,11 @@ type Resource struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+// ResourceRequest is a struct that resembles a request performed to edit or create a resource instance
+type ResourceRequest struct {
+	Name        string
+	Description string
+	Pin         int
+	Kind        resourceKind
+}

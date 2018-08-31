@@ -1,13 +1,18 @@
 package topic
 
-import "context"
+import (
+	"context"
+
+	broker "github.com/blanvam/rasp-garden/broker"
+	entity "github.com/blanvam/rasp-garden/entities"
+)
 
 // Repository interface definition for a respository
 type Repository interface {
-	IsConnected() bool
-	Connect(ctx context.Context, servers ...string) error
+	IsConnected(ctx context.Context) bool
+	Connect(ctx context.Context) error
 	Disconnect(ctx context.Context) error
-	Publish(ctx context.Context, topic string, qos uint8, payload interface{}) error
-	Subscribe(c chan []byte, ctx context.Context, topic string, qos uint8) error
+	Publish(ctx context.Context, topic string, qos uint8, r *entity.Resource) error
+	Subscribe(ctx context.Context, topic string, qos uint8, callback broker.CallbackHandler) error
 	Unsubscribe(ctx context.Context, topic string) error
 }

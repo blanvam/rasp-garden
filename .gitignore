@@ -2,3 +2,6 @@ files/
 
 .env
 diskv_db/
+
+mosquitto/data/
+mosquitto/log/mosquitto.log

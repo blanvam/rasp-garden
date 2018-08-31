@@ -1,0 +1,19 @@
+version: "2"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:1.4.12
+    hostname: mosquitto
+    mem_limit: 500M
+    volumes:
+      - ./mosquitto/:/mosquitto/
+    networks:
+      - mqtt
+    stop_signal: SIGINT
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+
+networks:
+  mqtt:
+    driver: bridge

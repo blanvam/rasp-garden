@@ -8,18 +8,19 @@ import (
 	"log"
 	"time"
 
+	"github.com/blanvam/rasp-garden/database"
 	entity "github.com/blanvam/rasp-garden/entities"
 	"github.com/blanvam/rasp-garden/resource"
 )
 
 type resourceRepository struct {
-	database resource.Database
+	database database.Database
 	minPin   int
 	maxPin   int
 }
 
 // NewResourceRepository aaa
-func NewResourceRepository(bd resource.Database, min int, max int) resource.Repository {
+func NewResourceRepository(bd database.Database, min int, max int) resource.Repository {
 	return &resourceRepository{
 		database: bd,
 		minPin:   min,
