@@ -15,6 +15,7 @@ import (
 	_resourceMiddleware "github.com/blanvam/rasp-garden/resource/middleware"
 	_resourceRepo "github.com/blanvam/rasp-garden/resource/repository"
 	_resourceUsecase "github.com/blanvam/rasp-garden/resource/usecase"
+	"github.com/joho/godotenv"
 
 	_topicRepo "github.com/blanvam/rasp-garden/topic/repository"
 	_topicUsecase "github.com/blanvam/rasp-garden/topic/usecase"
@@ -25,20 +26,15 @@ import (
 const (
 	resourceRoute string = "/resource"
 	timeout       int    = 3
-	jwtSecret     string = "MySecret"
 	minpin        int    = 1
 	maxpin        int    = 26
 )
 
-func checkOrSetEnv(key string, value string) {
-	if os.Getenv(key) == "" {
-		os.Setenv(key, value)
-	}
-}
-
 func init() {
-	checkOrSetEnv("BD_PATH", "/Users/asfarto/go/src/github.com/blanvam/rasp-garden/diskv_db")
-	checkOrSetEnv("JWT_SECRET", "MySecret")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 }
 
 func main() {
@@ -47,10 +43,11 @@ func main() {
 	database := database.NewDiskvDatabase(bdPath)
 
 	t := time.Duration(1) * time.Second
-	cid := "start"
-	u := "username"
-	p := "password"
-	s := []string{"0.0.0.0:1883"}
+	cid := "Cat_cloudmqtt"
+	u := os.Getenv("CLIENT_USERNAME")
+	p := os.Getenv("CLIENT_PASSWORD")
+	//s := []string{"0.0.0.0:1883"}
+	s := []string{os.Getenv("CLIENT_SERVER")}
 	brokerClient := broker.NewPahoClient(t, cid, u, p, s)
 
 	resourceRepo := _resourceRepo.NewResourceRepository(database, minpin, maxpin)

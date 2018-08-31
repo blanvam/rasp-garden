@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/blanvam/rasp-garden/broker"
-
 	"github.com/blanvam/rasp-garden/topic"
 )
 
