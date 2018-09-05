@@ -13,6 +13,7 @@ type Resource struct {
 	Status      ResourceStatus
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Intervals   []Interval
 }
 
 // ResourceRequest is a struct that resembles a request performed to edit or create a resource instance

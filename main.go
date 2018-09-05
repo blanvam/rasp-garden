@@ -43,7 +43,7 @@ func main() {
 	database := database.NewDiskvDatabase(bdPath)
 
 	t := time.Duration(1) * time.Second
-	cid := "Cat_cloudmqtt"
+	cid := os.Getenv("CLIENT_ID")
 	u := os.Getenv("CLIENT_USERNAME")
 	p := os.Getenv("CLIENT_PASSWORD")
 	//s := []string{"0.0.0.0:1883"}
@@ -75,12 +75,17 @@ func main() {
 		Status      entity.ResourceStatus
 	}
 
-	rsrc := FF{"E2", "Prueba2", 12, entity.ResourceKindOut, entity.ResourceStatusClosed}
+	rsrc := FF{"E2", "Prueba", 12, entity.ResourceKindOut, entity.ResourceStatusClosed}
 
 	err := topicUsecase.Publish(c, topic, &rsrc)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
+
+	// err = topicUsecase.Subscribe(c, topic, Receive)
+	//if err != nil {
+	//	fmt.Printf("%v\n", err)
+	//}
 
 	api.Api(resourceRoute, resourceController, resourceMiddleware)
 }
